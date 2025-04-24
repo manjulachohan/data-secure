@@ -12,9 +12,12 @@ DATA_FILE = "secure_data.json"
 SALT = b"secure_salt_value"
 LOCKOUT_DURATION = 60 
 
-# section l;ogin detalis
+# section login detalis
 if 'authenticated_user' not in st.session_state:
     st.session_state.authenticated_user = None
+    
+if 'falied_attempts' not in st.session_state:
+    st.session_state.failed_attempte = 0    
 
 if 'lockout_time' not in st.session_state:
     st.session_state.lockout_time = 0
@@ -57,7 +60,7 @@ st.title("🔒 Secure Data Encryption System")
 menu = ["Home", "Register", "Login", "Store Data", "Retrieve Data"]
 choice = st.sidebar.selectbox("Navigation", menu)
 
-# ---- Pages ----
+# ---- Home Page ----
 
 if choice == "Home":
     st.subheader("🏠 Welcome To My 🔏 Data Encryption System Using Streamlit!")
@@ -70,21 +73,23 @@ if choice == "Home":
 elif choice == "Register":
     st.subheader("📝Register New User")
     username = st.text_input("Choose Username")
-    passkey = st.text_input(" Choose password:", type="password")
+    password = st.text_input(" Choose password:", type="password")
 
     if st.button("Register "):
-        if username and passkey:
+        if username and password:
             if username in stored_data:
                 st.warning("⚠️  User already exisits.")
             else:
                 stored_data[username] = {
-                   "password": hash_password(passkey),
+                   "password": hash_password(password),
                    "data" : []
                 }
                 save_data(stored_data)
                 st.success("✅ User register sucessfull!")
         else:
-             st.error("Both fields are required.")  
+            st.error("Both fields are required.")  
+            
+    # --- Login Page  ---      
     elif choice == "Login":
         st.subheader("🔑User Login")          
 
@@ -98,19 +103,19 @@ elif choice == "Register":
 
         if st.button("Login"):
            if username in stored_data and stored_data[username]["password"] == hash_password(password):
-             st.session_state.authenticated_user = username
-             st.session_state.filed_attempts = 0
-             st.success (f"✅ Wellcome {username}!")
+                st.session_state.authenticated_user = username
+                st.session_state.filed_attempts = 0
+                st.success (f"✅ Wellcome {username}!")
 
         else:
-             st.session_state.failed_attempts += 1
-             remaining_attempts = 3 - st.session_state.failed_attempts
-             st.error(f"❌ Invalid Cresentials! Attempts left: {remaining}")
+            st.session_state.failed_attempts += 1
+            remaining_attempts = 3 - st.session_state.failed_attempts
+            st.error(f"❌ Invalid Cresentials! Attempts left: {remaining}")
 
-             if st.session_state.failed_attempts >= 3:
-                 st.session_state.lockout_time = time.time() + LOCKOUT_DURATION
-                 st.error("🔒 To many failed attempts! Locked for 60 seconds")
-                 st.stop()
+            if st.session_state.failed_attempts >= 3:
+                st.session_state.lockout_time = time.time() + LOCKOUT_DURATION
+                st.error("🔒 To many failed attempts! Locked for 60 seconds")
+                st.stop()
                  
  # data store section      
 elif choice == "Store Data":
@@ -139,19 +144,21 @@ elif choice == "Retieve Data":
         user_data = stored_data.get(st.session_state.authenticated_user, {}).get("data",[])
     
         if not user_data:
+            st.into("No data entries found.")
+        else:
             st.write("Encrypted Data Enteries:")
             for i, item in enumerate(user_data):
                 st.code(item,language="text")
             
                 
-            encrypted_input = st.text_area("Enter Encrypted Text")
-            passkey = st.text_input("Enter Passkey T Decrypt", type="password")
+        encrypted_input = st.text_area("Enter Encrypted Text")
+        passkey = st.text_input("Enter Passkey T Decrypt", type="password")
             
-            if st.button("Decrypt"):
-                result = decrypt_text(encrypted_input, passkey)
-                if result:
-                    st.success("f✅ Decrypted : {result}")
-                else:
-                    st.error(" Incorrect passkey or corrupted data. ")    
+        if st.button("Decrypt"):
+            result = decrypt_text(encrypted_input, passkey)
+            if result:
+                st.success("f✅ Decrypted : {result}")
+            else:
+                st.error(" ❌Incorrect passkey or corrupted data. ")    
               
 
