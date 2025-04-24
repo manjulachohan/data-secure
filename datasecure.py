@@ -73,12 +73,12 @@ elif choice == "Register":
     passkey = st.text_input(" Choose password:", type="password")
 
     if st.button("Register "):
-        if username and password:
+        if username and passkey:
             if username in stored_data:
                 st.warning("⚠️  User already exisits.")
             else:
                 stored_data[username] = {
-                   "password": hash_password(password),
+                   "password": hash_password(passkey),
                    "data" : []
                 }
                 save_data(stored_data)
@@ -94,13 +94,13 @@ elif choice == "Register":
             st.stop()
             
         username = st.text_input("Username")
-        password = st.text_input("Password", tpye="password")     
+        password = st.text_input("password", tpye="password")     
 
         if st.button("Login"):
-           if username in stored_data and save_data[username]["password"] == hash_password(password):
+           if username in stored_data and stored_data[username]["password"] == hash_password(password):
              st.session_state.authenticated_user = username
              st.session_state.filed_attempts = 0
-             st.session_state (f"✅ Wellcome {username}!")
+             st.success (f"✅ Wellcome {username}!")
 
         else:
              st.session_state.failed_attempts += 1
@@ -108,8 +108,8 @@ elif choice == "Register":
              st.error(f"❌ Invalid Cresentials! Attempts left: {remaining}")
 
              if st.session_state.failed_attempts >= 3:
-                 st.session_state.lockout_time = time.time() = LOCKOUT_DURATION
-                 st.error("🔒 To many failed attempts! Locked for 60 second")
+                 st.session_state.lockout_time = time.time() + LOCKOUT_DURATION
+                 st.error("🔒 To many failed attempts! Locked for 60 seconds")
                  st.stop()
                  
  # data store section      
@@ -145,6 +145,7 @@ elif choice == "Retieve Data":
             
                 
             encrypted_input = st.text_area("Enter Encrypted Text")
+            passkey = st.text_input("Enter Passkey T Decrypt", type="password")
             
             if st.button("Decrypt"):
                 result = decrypt_text(encrypted_input, passkey)
